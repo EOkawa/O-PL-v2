@@ -23,6 +23,7 @@
     <ProjectGuid>{BEEC3DF8-038E-4E61-9C02-F526C8064D8B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <ProjectName>NIT_Cam</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -36,7 +37,7 @@
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
@@ -68,6 +69,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>O-PL</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -103,29 +107,32 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(PROJECTDIR)..\inc;$(PROJECTDIR)..;$(PROJECTDIR)Common;$(PROJECTDIR)header</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PROJECTDIR)..\inc;$(PROJECTDIR)..;$(PROJECTDIR)Common;$(PROJECTDIR)header;$(PROJECTDIR)..\lib\tiff\include;C:\Program Files\National Instruments\LabVIEW 2020\cintools</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(PROJECTDIR)..\lib\$(PLATFORMTARGET)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);NITLibrary_$(PLATFORMTARGET)-3.1.0.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(PROJECTDIR)..\lib\$(PLATFORMTARGET);$(PROJECTDIR)..\lib\tiff\lib\tiffxx.lib;$(PROJECTDIR)..\lib\tiff\lib\tiff.lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);NITLibrary_$(PLATFORMTARGET)-3.1.0.lib;"C:\Program Files\National Instruments\LabVIEW 2020\cintools\labview.lib";"$(PROJECTDIR)..\lib\tiff\lib\tiff.lib";"$(PROJECTDIR)..\lib\tiff\lib\tiffxx.lib"</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\Acquisition.cpp" />
     <ClCompile Include="source\Buffer.cpp" />
     <ClCompile Include="source\Common.cpp" />
-    <ClCompile Include="source\DLL_Main.cpp" />
+    <ClCompile Include="source\dllmain.cpp" />
     <ClCompile Include="source\Log.cpp" />
-    <ClCompile Include="source\NIT_Cam.cpp" />
+    <ClCompile Include="source\pch.cpp" />
+    <ClCompile Include="source\tiffImage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Common\CameraSelector.h" />
     <ClInclude Include="header\Acquisition.h" />
     <ClInclude Include="header\Buffer.h" />
     <ClInclude Include="header\Common.h" />
-    <ClInclude Include="header\DLL_Main.h" />
+    <ClInclude Include="header\dllmain.h" />
+    <ClInclude Include="header\framework.h" />
     <ClInclude Include="header\Log.h" />
     <ClInclude Include="header\NIT_Cam.h" />
+    <ClInclude Include="header\pch.h" />
+    <ClInclude Include="header\tiffImage.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

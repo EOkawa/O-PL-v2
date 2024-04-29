@@ -1,4 +1,7 @@
+#ifndef LOG_H
+#define LOG_H
 #pragma once
+
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -11,21 +14,26 @@
 
 using namespace std;
 
-class systemLog
-{
+class systemLog {
+	public:
+		static systemLog& get() {
+			static systemLog instance;
+			return instance;
+		}	
+		int init(bool enable);
+		void write(std::string message);
+		void uninit();
+
 private:
-	std::ofstream logFile;		// log file
-	std::mutex mtx_log;			// mutex
-	bool enabled = false;		// enables/disables logging
+		systemLog();
+		~systemLog();
 
-	std::string getCurrentDateTime();
+		std::ofstream logFile;		// log file
+		std::mutex mtx_log;			// mutex
+		bool enabled;				// logging is enabled/disabled
+		std::string fileName;
 
-public:
-	systemLog();
-	~systemLog();
-
-	int init(bool enable);
-	void write(std::string message);
-	void uninit();
+		std::string getCurrentDateTime();
+		void getFileName();
 };
-
+#endif

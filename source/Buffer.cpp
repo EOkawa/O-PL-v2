@@ -4,48 +4,43 @@
 // Ring buffer
 // *****************************************************************************
 
-void ringBuffer::create()
-{
-    this->Image.resize(BUFFERSIZE, vector<float>(ROWSIZE * COLUMNSIZE));
-    this->writeHead = 0;
+void ringBuffer::create() {
+    this->Image.resize(STREAMBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
 }
 
-void ringBuffer::increment()
+void ringBuffer::saveImage(float* data, size_t buffer, vector<float>& FF)
 {
-    if (this->writeHead >= BUFFERSIZE - 1) writeHead = 0;
-    else ++this->writeHead;
-}
-
-void ringBuffer::saveImage(float* data)
-{
-    mtx.lock();
-
+    size_t writeHead = (buffer - 1) % STREAMBUFFERSIZE;
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
-        this->Image[this->writeHead].at(i) = data[i];
-    cout << "IR [" << this->writeHead << "] " << this->Image[this->writeHead][0] << endl;
+        this->Image[writeHead].at(i) = (uint16_t)(data[i] * BITDEPTH / FF[i]);
+    
+    this->readHead = writeHead;
 
-    this->increment();
-
-    mtx.unlock();
+    systemLog::get().write("writeHead " + to_string(writeHead));
 }
 
-size_t ringBuffer::getWriteHead()
+void ringBuffer::readImage(uint16_t* destination)
 {
-    return this->writeHead;
+    if (this->readHead >= 0)
+    {
+        for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+            destination[i] = this->Image[this->readHead].at(i);
+
+        systemLog::get().write("readHead " + to_string(this->readHead));
+    }
 }
 
-void ringBuffer::reset()
-{
-    this->writeHead = 0;
-    cout << "IR RESET: " << this->writeHead << endl;
+int64_t ringBuffer::getReadHead() {
+    return this->readHead;
 }
 
-void ringBuffer::destroy()
-{
+void ringBuffer::reset() {
+    this->readHead = -1;
+}
+
+void ringBuffer::destroy() {
     this->Image.clear();
-    this->writeHead = 0;
 }
-
 
 // *****************************************************************************
 // livePL ring buffer
@@ -55,46 +50,56 @@ void livePLBuffer::create()
 {
     ringBuffer::create();
     this->tempImage.resize(ROWSIZE * COLUMNSIZE);
-    this->alternate = false;
 }
 
-void livePLBuffer::savePL(float* data)
+void livePLBuffer::savePL(float* data, size_t buffer)
 {
-    mtx.lock(); //This is required because NIT camera is multi-threaded
+    size_t writeHead = (buffer - 1) % STREAMBUFFERSIZE; // Increment writeHead;
 
-    if (!this->alternate)
+    if (buffer % 2 == 1)
     {
-        for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
-            this->tempImage.at(i) = data[i];
+        if (!this->writing && !this->copying) // Wait until writing and copying stops
+        {
+            this->writing = true;
+            
+            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+                this->tempImage.at(i) = data[i] * BITDEPTH;
 
-        this->tempBrightness = calcBrightness(data, 250);
-        cout << "TMP " << this->tempImage[0] << ", Brightness " << tempBrightness << endl;
-
-        this->alternate = true;
+            this->tempBrightness = calcBrightness(data, 250);
+            this->writing = false;
+        }
     }
     else
     {
+        this->copying = true; // Stop writing from starting
+        
+        while (writing) ::Sleep(1); // Wait for writing to finish
+
         if (this->tempBrightness > calcBrightness(data, 250))
-            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
-                this->Image[this->writeHead].at(i) = this->tempImage.at(i) - data[i];
+            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+                this->Image[writeHead].at(i) = (uint16_t)max((float)0, (this->tempImage.at(i) - (data[i] * BITDEPTH)));
         else
-            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
-                this->Image[this->writeHead].at(i) = data[i] - this->tempImage.at(i);
+            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+                this->Image[writeHead].at(i) = (uint16_t)max((float)0, (data[i] * BITDEPTH) - this->tempImage.at(i));
 
-        cout << "livePL [" << this->writeHead << "] " << this->Image[this->writeHead][0] << endl;
-
-        this->increment();
-        this->alternate = false;
+        this->copying = false;
+        this->readHead = writeHead; // Increment readHead 
+        
+        systemLog::get().write("writeHead " + to_string(writeHead));
     }
-
-    mtx.unlock();
 }
 
-void livePLBuffer::reset()
+void livePLBuffer::readPL(uint16_t* destination) 
 {
-    this->alternate = false;
-    this->writeHead = 0;
-    cout << "LivePL RESET: " << this->alternate << ", " << this->writeHead << endl;
+    if (this->readHead >= 0)
+    {
+        while (this->copying) ::Sleep(1);
+
+        for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+            destination[i] = this->Image[this->readHead].at(i);
+
+        systemLog::get().write("readHead " + to_string(this->readHead));
+    }
 }
 
 void livePLBuffer::destroy()
@@ -104,74 +109,83 @@ void livePLBuffer::destroy()
 }
 
 // *****************************************************************************
-// livePL ring buffer
+// PL buffer
 // *****************************************************************************
 
 void PLBuffer::create()
 {
-    ringBuffer::create();
     this->tempImage.resize(ROWSIZE * COLUMNSIZE);
-    this->brightImage.resize(BUFFERSIZE, vector<float>(ROWSIZE * COLUMNSIZE));
-    this->darkImage.resize(BUFFERSIZE, vector<float>(ROWSIZE * COLUMNSIZE));
-    this->writeHead = 0;
-    this->alternate = false;
+    this->brightImage.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
+    this->darkImage.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
 }
 
-void PLBuffer::savePL(float* data)
+void PLBuffer::savePL(float* data, size_t buffer)
 {
-    mtx.lock();
-
-    if (!this->alternate)
+    if (buffer%2 == 1)
     {
+        systemLog::get().write("Writing to temp buffer " + to_string(buffer/2));
         for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
-            this->tempImage.at(i) = data[i];
-
+            this->tempImage.at(i) = data[i] * BITDEPTH;
         this->tempBrightness = calcBrightness(data, 250);
-        cout << "TMP " << this->tempImage[0] << ", Brightness " << tempBrightness << endl;
-
-        this->alternate = true;
     }
     else
     {
-        if (this->tempBrightness > calcBrightness(data, 250))
-            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
-            {
-                this->Image[this->writeHead].at(i) = this->tempImage.at(i) - data[i];
-                this->brightImage[this->writeHead].at(i) = this->tempImage.at(i);
-                this->darkImage[this->writeHead].at(i) = data[i];
-            }
-        else
-            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
-            {
-                this->Image[this->writeHead].at(i) = data[i] - this->tempImage.at(i);
-                this->brightImage[this->writeHead].at(i) = data[i]; 
-                this->darkImage[this->writeHead].at(i) = this->tempImage.at(i);
-            }
+        size_t writeHead = (buffer/2) - 1;
+        systemLog::get().write("Starting to copy " + to_string(writeHead));
 
-        cout << "PL [" << this->writeHead << "] " << this->Image[this->writeHead][0] << endl;
+        if (this->tempBrightness > calcBrightness(data, 250)) {
+            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++) {
+                this->brightImage[writeHead].at(i) = (uint16_t)(this->tempImage.at(i));
+                this->darkImage[writeHead].at(i) = (uint16_t)(data[i] * BITDEPTH);
+            }
+        }
+        else {
+            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++) {
+                this->brightImage[writeHead].at(i) = (uint16_t)(data[i] * BITDEPTH);
+                this->darkImage[writeHead].at(i) = (uint16_t)(this->tempImage.at(i));
+            }
+        }
+        this->readHead = writeHead; // Increment readHead 
+        systemLog::get().write("Copied writeHead " + to_string(buffer - 1) + ", readHead: " + to_string(this->readHead));
+    }
+}
 
-        this->increment();
-        this->alternate = false;
+void PLBuffer::readPL(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
+{ 
+    for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+        destination[i] = ((float)this->brightImage[bufferNumber].at(i) - (float)this->darkImage[bufferNumber].at(i)) / FF.at(i);
+}
+
+void PLBuffer::readBright(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
+{
+    for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+        destination[i] = this->brightImage[bufferNumber].at(i) / FF.at(i);
+}
+
+void PLBuffer::readDark(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
+{
+    for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+        destination[i] = this->darkImage[bufferNumber].at(i) / FF.at(i);
+}
+
+void PLBuffer::readAveragePL(uint16_t* destination, vector<float>& FF, size_t average)
+{
+    //Copy the first image to average
+    for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+        this->tempImage.at(i) = max( (float)0, ((float)this->brightImage[0].at(i) - (float)this->darkImage[0].at(i)) );
+
+    // Add subsequent images
+    for (size_t i = 1; i < average; ++i) {
+        for (size_t j = 0; j < ROWSIZE * COLUMNSIZE; ++j)
+            this->tempImage.at(i) = max((float)0, ((float)this->brightImage[i].at(j) - (float)this->darkImage[i].at(j)));
     }
 
-    mtx.unlock();
-}
+    // Divide by the number of averages
+    for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
+        destination[i] = (uint16_t)((this->tempImage.at(i) / average) / FF.at(i));
 
-void PLBuffer::setAverage(size_t newAverage)
-{
-    this->average = newAverage;
-}
+    cout << destination[100] << endl;
 
-size_t PLBuffer::getAverage()
-{
-    return this->average;
-}
-
-void PLBuffer::reset()
-{
-    this->alternate = false;
-    this->writeHead = 0;
-    cout << "PL RESET: " << this->alternate << ", " << this->writeHead << endl;
 }
 
 void PLBuffer::destroy()

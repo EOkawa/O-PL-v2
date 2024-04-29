@@ -4,19 +4,16 @@
 #define NIT_CAM_H_INCLUDED
 
 #include <Windows.h>                     //For ::Sleep
-
 #include <iostream>
-
 #include <NITManager.h>
 #include <NITDevice.h>
 #include <NITAutomaticGainControl.h>
 #include <NITPlayer.h>
 #include <NITFrame.h>
 
-#include "CameraSelector.h"
 #include "Common.h"
+#include "CameraSelector.h"
 #include "Acquisition.h"
-#include "Log.h"
 
 #ifndef CAMERA_MODEL
 #error you must define CAMERA_MODEL in CameraSelector.h.
@@ -45,15 +42,13 @@ using namespace NITLibrary::NITToolBox;  //For the filters and observer
 #else
 #include "ColorPipeline.h"
 #endif // NEED_AGC
-#endif
 
-NITDevice* dev;
-Acquisition acq;
-systemLog syslog;
+#endif // defined(USE_USB)
 
-int CheckConnection(NITDevice*);
+// Functions
+static int CheckConnection(NITDevice* dev);
 void Start(NITLibrary::NITDevice*);
 void Stop(NITLibrary::NITDevice*);
 void Quit(NITLibrary::NITDevice*);
 
-#endif
+#endif // NIT_CAM_H_INCLUDED
