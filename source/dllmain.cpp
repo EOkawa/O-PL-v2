@@ -121,26 +121,24 @@ extern "C" DllExport int32_t __cdecl setState(uint8_t newState)
     switch (state)
     {
         case eState::IR:
-        {
             setCamFPS(10); // There is no need for fast acquisition because it is for display only
+            setCamTrigger(0); // Set trigger off
             acq.setState(eState::IR);
             systemLog::get().write("New state: IR");
             break;
-        }
         case eState::LivePL:
-        {
             setCamFPS(10); // There is no need for fast acquisition because it is for display only
+            setCamTrigger(1); // Set trigger on
             acq.setState(eState::LivePL);
             systemLog::get().write("New state: LivePL");
             break;
-        }
         case eState::PL:
-        {
             acq.reset();
+            setCamFPS(FPS); // Back to set acquisition speed
+            setCamTrigger(1); // Set trigger on
             acq.setState(eState::PL);
             systemLog::get().write("New state: PL");
             break;
-        }
         default:
             acq.setState(eState::none);
     }
@@ -238,14 +236,13 @@ extern "C" DllExport int32_t __cdecl setCamFPS(double newFPS)
     static eState state = (acq.getState());
     static double readValue;
 
-    if (state == eState::PL)
+    if (state != eState::PL)
     {
         double min_fps = dev->minFps();
         double max_fps = dev->maxFps();
 
         if ((newFPS > max_fps) || (newFPS < min_fps)) return -2;
 
-        FPS = newFPS;
         dev->setFps(newFPS);
         dev->updateConfig();
 
@@ -255,19 +252,13 @@ extern "C" DllExport int32_t __cdecl setCamFPS(double newFPS)
         if (readValue == newFPS) return 1;
         else return -1;
     }
-    else
-    {
-        if (newFPS > 30) newFPS = 30;
+}
 
-        dev->setFps(newFPS);
-        dev->updateConfig();
-
-        readValue = dev->fps();
-        systemLog::get().write("FPS: " + to_string(readValue));
-
-        return 1;
-    }
-    return -1;
+extern "C" DllExport int32_t __cdecl writeCamFPS(double newFPS)
+{
+    systemLog::get().write("Saving FPS Value: " + to_string(newFPS));
+    FPS = newFPS; // Just store value
+    return 1;
 }
 
 extern "C" DllExport int32_t __cdecl getCamFPSrange(double &current, double &min_fps, double &max_fps)

@@ -69,8 +69,8 @@ class PLBuffer : public ringBuffer
 {
     private:
         vector<float> tempImage;
-        vector<vector<uint16_t>> brightImage;
-        vector<vector<uint16_t>> darkImage;
+        vector<vector<uint16_t>> image1; // Odd images
+        vector<vector<uint16_t>> image2; // Even images
         float tempBrightness;
     public:
         PLBuffer() :

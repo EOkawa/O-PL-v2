@@ -10,11 +10,13 @@
 #define PLBUFFERSIZE 40 //Used for PL
 
 #include <iostream>
+#include <vector>
 #include "Log.h"
 
 using namespace std;
 
 // Functions
 float calcBrightness(float*, int);
+float calcBrightness(vector<uint16_t>&, int);
 
 #endif

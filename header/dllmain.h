@@ -64,6 +64,7 @@ extern "C" DllExport int32_t __cdecl getCamExposure(double& Exposure);
 extern "C" DllExport int32_t __cdecl setCamExposure(double newExposure);
 extern "C" DllExport int32_t __cdecl setCamGain(size_t newGain);
 extern "C" DllExport int32_t __cdecl setCamFPS(double newFPS);
+extern "C" DllExport int32_t __cdecl writeCamFPS(double newFPS);
 extern "C" DllExport int32_t __cdecl getCamFPSrange(double& current, double &min_fps, double &max_fps);
 extern "C" DllExport int32_t __cdecl setCamTrigger(double enable);
 /*******************************************************************************************/

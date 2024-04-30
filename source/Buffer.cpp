@@ -115,83 +115,120 @@ void livePLBuffer::destroy()
 void PLBuffer::create()
 {
     this->tempImage.resize(ROWSIZE * COLUMNSIZE);
-    this->brightImage.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
-    this->darkImage.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
+    this->image1.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
+    this->image2.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
 }
 
 void PLBuffer::savePL(float* data, size_t buffer)
 {
-    if (buffer%2 == 1)
-    {
-        systemLog::get().write("Writing to temp buffer " + to_string(buffer/2));
-        for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
-            this->tempImage.at(i) = data[i] * BITDEPTH;
-        this->tempBrightness = calcBrightness(data, 250);
-    }
-    else
-    {
-        size_t writeHead = (buffer/2) - 1;
-        systemLog::get().write("Starting to copy " + to_string(writeHead));
+    vector<uint16_t>* ptr;
 
-        if (this->tempBrightness > calcBrightness(data, 250)) {
-            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++) {
-                this->brightImage[writeHead].at(i) = (uint16_t)(this->tempImage.at(i));
-                this->darkImage[writeHead].at(i) = (uint16_t)(data[i] * BITDEPTH);
-            }
-        }
-        else {
-            for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++) {
-                this->brightImage[writeHead].at(i) = (uint16_t)(data[i] * BITDEPTH);
-                this->darkImage[writeHead].at(i) = (uint16_t)(this->tempImage.at(i));
-            }
-        }
+    size_t writeHead = (buffer - 1) / 2;
+
+    if (buffer % 2 == 1) ptr = &this->image1[writeHead];
+    else ptr = &this->image2[writeHead];
+
+    systemLog::get().write("Writing to image1 " + to_string(writeHead));
+    for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
+        ptr->at(i) = (uint16_t)(data[i] * BITDEPTH);
+
+    if (buffer % 2 == 0) {
         this->readHead = writeHead; // Increment readHead 
-        systemLog::get().write("Copied writeHead " + to_string(buffer - 1) + ", readHead: " + to_string(this->readHead));
+        systemLog::get().write("readHead: " + to_string(this->readHead));
     }
 }
 
 void PLBuffer::readPL(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
-{ 
+{
+    bool brightFirst = (calcBrightness(this->image1[0], 250) > calcBrightness(this->image2[0], 250));
+
+    vector<uint16_t>* ptrBright;
+    vector<uint16_t>* ptrDark;
+
+    if (brightFirst) {
+        ptrBright = &this->image1[bufferNumber];
+        ptrDark = &this->image2[bufferNumber];
+    }
+    else {
+        ptrBright = &this->image2[bufferNumber];
+        ptrDark = &this->image1[bufferNumber];
+    }
+
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
-        destination[i] = ((float)this->brightImage[bufferNumber].at(i) - (float)this->darkImage[bufferNumber].at(i)) / FF.at(i);
+        destination[i] = (uint16_t)(((float)ptrBright->at(i) - (float)ptrDark->at(i)) / FF.at(i));
 }
 
 void PLBuffer::readBright(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
 {
+    vector<uint16_t>* ptr;
+
+    if (calcBrightness(this->image1[bufferNumber], 250) > calcBrightness(this->image2[bufferNumber], 250)) 
+        ptr = &this->image1[bufferNumber];
+    else
+        ptr = &this->image2[bufferNumber];
+
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
-        destination[i] = this->brightImage[bufferNumber].at(i) / FF.at(i);
+            destination[i] = ptr->at(i) / FF.at(i);
 }
 
 void PLBuffer::readDark(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
 {
+    vector<uint16_t>* ptr;
+
+    if (calcBrightness(this->image1[bufferNumber], 250) < calcBrightness(this->image2[bufferNumber], 250))
+        ptr = &this->image1[bufferNumber];
+    else
+        ptr = &this->image2[bufferNumber];
+
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
-        destination[i] = this->darkImage[bufferNumber].at(i) / FF.at(i);
+        destination[i] = ptr->at(i) / FF.at(i);
 }
 
 void PLBuffer::readAveragePL(uint16_t* destination, vector<float>& FF, size_t average)
 {
+    bool brightFirst = (calcBrightness(this->image1[0], 250) > calcBrightness(this->image2[0], 250));
+    
+    vector<uint16_t>* ptrBright;
+    vector<uint16_t>* ptrDark;
+    
+    if (brightFirst) {
+        ptrBright = &this->image1[0];
+        ptrDark = &this->image2[0];
+    }
+    else {
+        ptrBright = &this->image2[0];
+        ptrDark = &this->image1[0];
+    }
+
     //Copy the first image to average
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
-        this->tempImage.at(i) = max( (float)0, ((float)this->brightImage[0].at(i) - (float)this->darkImage[0].at(i)) );
+        this->tempImage.at(i) = max((float)0, ((float)ptrBright->at(i) - (float)ptrDark->at(i)));
 
     // Add subsequent images
-    for (size_t i = 1; i < average; ++i) {
+    for (size_t i = 1; i < average; ++i) 
+    {
+        if (brightFirst) {
+            ptrBright = &this->image1[i];
+            ptrDark = &this->image2[i];
+        }
+        else {
+            ptrBright = &this->image2[i];
+            ptrDark = &this->image1[i];
+        }
+
         for (size_t j = 0; j < ROWSIZE * COLUMNSIZE; ++j)
-            this->tempImage.at(i) = max((float)0, ((float)this->brightImage[i].at(j) - (float)this->darkImage[i].at(j)));
+            this->tempImage.at(i) = max((float)0, ((float)ptrBright->at(j) - (float)ptrDark->at(j)));
     }
 
     // Divide by the number of averages
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
         destination[i] = (uint16_t)((this->tempImage.at(i) / average) / FF.at(i));
-
-    cout << destination[100] << endl;
-
 }
 
 void PLBuffer::destroy()
 {
     ringBuffer::destroy();
     this->tempImage.clear();
-    this->brightImage.clear();
-    this->darkImage.clear();
+    this->image1.clear();
+    this->image2.clear();
 }
