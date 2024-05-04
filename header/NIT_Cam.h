@@ -41,14 +41,7 @@ using namespace NITLibrary::NITToolBox;  //For the filters and observer
 #include "AgcPipeline.h"
 #else
 #include "ColorPipeline.h"
+
 #endif // NEED_AGC
-
 #endif // defined(USE_USB)
-
-// Functions
-static int CheckConnection(NITDevice* dev);
-void Start(NITLibrary::NITDevice*);
-void Stop(NITLibrary::NITDevice*);
-void Quit(NITLibrary::NITDevice*);
-
 #endif // NIT_CAM_H_INCLUDED

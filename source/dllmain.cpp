@@ -27,10 +27,15 @@ extern "C" DllExport int __cdecl Init(uint8_t logEnabled)
         systemLog::get().init(logEnabled > 0);
         systemLog::get().write("Initialising acquisition...");
 
-        dev = CreateDevice();       //Open a connection to the camera and create a NITDevice instance
-        ConfigureDevice(dev);       //Set suitable parameters for the current camera
+        dev = CreateDevice();           //Open a connection to the camera and create a NITDevice instance
+        if (dev == NULL) 
+        {
+            systemLog::get().write("Unable to connect to the camera. MCheck USB connection");
+            return -1;                  // -1 means that there are no devices connected
+        }
+        ConfigureDevice(dev);           //Set suitable parameters for the current camera
 
-        NITLibrary::ConnectorType connector = dev->connectorType();
+        NITLibrary::ConnectorType connector = dev->connectorType(); // Make sure camera is recognised as USB3
         switch (connector)
         {
             case NITLibrary::ConnectorType::USB_2:
@@ -44,12 +49,9 @@ extern "C" DllExport int __cdecl Init(uint8_t logEnabled)
                 return -3;
         }
 
-        acq.init();                 //Initialise the acquisition class
-        if (dev != NULL) {
-            systemLog::get().write("Camera Initialised");
-            return 1;
-        }
-        return -1;
+        acq.init();                     //Initialise the acquisition class
+        systemLog::get().write("Camera Initialised");
+        return 1;
     }
     catch (NITException& exc) {
         systemLog::get().write(exc.what());
@@ -82,24 +84,6 @@ extern "C" DllExport int __cdecl Run()
     return 1;
 }
 
-/** Check connection type. Camera should only work on USB3**/
-static int CheckConnection(NITDevice* dev)
-{
-    NITLibrary::ConnectorType connector = dev->connectorType();
-    switch (connector)
-    {
-        case NITLibrary::ConnectorType::USB_2:
-            systemLog::get().write("Connector type USB 2.0 detected. Please disconnect and reconnect the USB cable");
-            return -2;
-        case NITLibrary::ConnectorType::USB_3:
-            systemLog::get().write("Connector type USB 3.0 detected");
-            return 0;
-        default:
-            systemLog::get().write("Unknown connector type detected. Terminating program");
-            return -3;
-      }
-}
-
 extern "C" DllExport uint8_t __cdecl getState()
 {
     uint8_t state;
@@ -116,19 +100,21 @@ extern "C" DllExport int32_t __cdecl setState(uint8_t newState)
     eState state = static_cast<eState>(newState);
 
     acq.setState(eState::none);
-    Sleep(500);
+    Sleep(250);
 
     switch (state)
     {
         case eState::IR:
             setCamFPS(10); // There is no need for fast acquisition because it is for display only
             setCamTrigger(0); // Set trigger off
+            Sleep(250);
             acq.setState(eState::IR);
             systemLog::get().write("New state: IR");
             break;
         case eState::LivePL:
             setCamFPS(10); // There is no need for fast acquisition because it is for display only
             setCamTrigger(1); // Set trigger on
+            Sleep(250);
             acq.setState(eState::LivePL);
             systemLog::get().write("New state: LivePL");
             break;
@@ -136,6 +122,7 @@ extern "C" DllExport int32_t __cdecl setState(uint8_t newState)
             acq.reset();
             setCamFPS(FPS); // Back to set acquisition speed
             setCamTrigger(1); // Set trigger on
+            Sleep(250);
             acq.setState(eState::PL);
             systemLog::get().write("New state: PL");
             break;
@@ -198,60 +185,29 @@ extern "C" DllExport int32_t __cdecl setCamGain(size_t newGain)
     }
 }
 
-extern "C" DllExport void __cdecl Stop()
-{
-    systemLog::get().write("Stopping acquisition...");
-    acq.setState(eState::none);
-    ::Sleep(200);
-    dev->stop();                                //Stop the capture
-    ::Sleep(200);
-
-    systemLog::get().write("Acquisition stopped");
-}
-
-extern "C" DllExport void __cdecl Uninit()
-{
-    Quit(dev);
-    systemLog::get().write("Program terminated");
-    systemLog::get().write("#############################################");
-    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-    _CrtDumpMemoryLeaks();
-}
-
-void Stop(NITLibrary::NITDevice* dev)
-{
-    systemLog::get().write("Stopping acquisition...");
-    dev->stop();    // Stop streaming
-}
-
-void Quit(NITLibrary::NITDevice* dev)
-{
-    systemLog::get().write("Uninitialising...");
-    ::Sleep(2000);
-    acq.uninit();   // Stop acq
-}
-
 extern "C" DllExport int32_t __cdecl setCamFPS(double newFPS)
 {
     static eState state = (acq.getState());
     static double readValue;
 
-    if (state != eState::PL)
-    {
-        double min_fps = dev->minFps();
-        double max_fps = dev->maxFps();
+    double min_fps = dev->minFps();
+    double max_fps = dev->maxFps();
 
-        if ((newFPS > max_fps) || (newFPS < min_fps)) return -2;
-
-        dev->setFps(newFPS);
-        dev->updateConfig();
-
+    if ((newFPS > max_fps) || (newFPS < min_fps))
+    {   
         readValue = dev->fps();
-        systemLog::get().write("FPS: " + to_string(readValue));
+        systemLog::get().write("Unable to set FPS. Current FPS: " + to_string(readValue) + ". min: " + to_string(min_fps) + ", max: " + to_string(max_fps));
 
-        if (readValue == newFPS) return 1;
-        else return -1;
+        return -2;
     }
+    dev->setFps(newFPS);
+    dev->updateConfig();
+
+    readValue = dev->fps();
+    systemLog::get().write("FPS: " + to_string(readValue));
+
+    if (readValue == newFPS) return 1;
+    else return -1;
 }
 
 extern "C" DllExport int32_t __cdecl writeCamFPS(double newFPS)
@@ -306,16 +262,53 @@ extern "C" DllExport int32_t __cdecl setCamExposure(double newExposure)
     }
 }
 
-extern "C" DllExport int32_t __cdecl setCamTrigger(double enable)
+extern "C" DllExport int32_t __cdecl setCamTrigger(uint8_t enable)
 {
-    double readValue;
+    try
+    {
+        string writeValue;
+        string readValue;
 
-    if (enable) dev->setParamValueOf("Trigger Mode", "Output");     //Turn trigger on
-    else dev->setParamValueOf("Trigger Mode", "Disabled");   //Turn trigger off
-    dev->updateConfig();                                    //Data is sent to camera
+        if (enable) writeValue = "Output";
+        else writeValue = "Disabled";
+        systemLog::get().write("Changing Trigger Mode to: " + writeValue);
 
-    readValue = dev->paramValueOf("Trigger Mode");
-    systemLog::get().write("Trigger Mode: " + to_string(readValue));
+        dev->setParamValueOf("Trigger Mode", writeValue);   //Turn trigger on or off    
+        dev->updateConfig();                                //Data is sent to camera
 
-    return 1;
+        readValue = dev->paramStrValueOf("Trigger Mode");   //Get the rows as string value
+        systemLog::get().write("Trigger Mode: " + readValue);
+
+        if (readValue == writeValue) return 1;
+        else return -1;
+    }
+    catch (NITException& exc)
+    {
+        systemLog::get().write(exc.what());
+        return -1;
+    }
 }
+
+extern "C" DllExport void __cdecl Stop()
+{
+    systemLog::get().write("Stopping acquisition...");
+    acq.setState(eState::none);
+    ::Sleep(200);
+    dev->stop();                                //Stop the capture
+    ::Sleep(200);
+
+    systemLog::get().write("Acquisition stopped");
+}
+
+extern "C" DllExport void __cdecl Uninit()
+{
+    setCamTrigger(0); // Set trigger off
+    systemLog::get().write("Uninitialising...");
+    ::Sleep(1000);
+    acq.uninit();   // Stop acq
+    systemLog::get().write("Program terminated");
+    systemLog::get().write("#############################################");
+    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+    _CrtDumpMemoryLeaks();
+}
+

@@ -43,18 +43,10 @@ class Acquisition
 		size_t BufferNumber;			// keeps track of the incoming images
 		bool FF_valid;					// boolean indicating if FF is valid
 		bool completed;
-
+	
 	public:
-		Acquisition() :
-			state(eState::none),
-			average(5),
-			BufferNumber(0),
-			FF_valid(false),
-			completed(false)
-		{}
-
-		~Acquisition()
-		{}
+		Acquisition();					// Constructor
+		~Acquisition();					// Destructor
 
 		// Method declarations
 		void init();
