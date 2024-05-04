@@ -3,13 +3,26 @@
 MLTiffW tiffWrite;						// handles tiff writes
 MLTiffR tiffRead;                       // handles tiff reads
 
-void Acquisition::init()
+Acquisition::Acquisition() :		    // Connstructor -> init values
+    state(eState::none),
+    average(5),
+    BufferNumber(0),
+    FF_valid(false),
+    completed(false)
 {
     this->FF.resize((ROWSIZE * COLUMNSIZE), 0);
     this->loadFF();
     this->IR_Buffer.create();
     this->livePL_Buffer.create();
     this->PL_Buffer.create();
+}
+
+Acquisition::~Acquisition()				// Destructor
+{
+    this->state = eState::none;
+    this->IR_Buffer.destroy();
+    this->livePL_Buffer.destroy();
+    this->PL_Buffer.destroy();
 }
 
 int Acquisition::loadFF()
@@ -156,11 +169,4 @@ bool Acquisition::getPLready() const {
 
 void Acquisition::reset() {
     this->PL_Buffer.reset();
-}
-
-void Acquisition::uninit() {
-    this->state = eState::none;
-    this->IR_Buffer.destroy();
-    this->livePL_Buffer.destroy();
-    this->PL_Buffer.destroy();
 }

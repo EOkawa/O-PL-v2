@@ -48,19 +48,11 @@ class Acquisition
 		int loadFF();
 
 	public:
-		Acquisition() :					// Constructor -> init values
-			state(eState::none),
-			average(5),
-			BufferNumber(0),
-			FF_valid(false),
-			completed(false)
-		{}
-
-		~Acquisition()					// Destructor
-		{}
+		
+		Acquisition();					// Constructor
+		~Acquisition();					// Destructor
 
 		// Method declarations
-		void init();
 		eState getState() const;
 		int64_t getReadHead();
 		void getImage(uint16_t*);
@@ -73,7 +65,6 @@ class Acquisition
 		void setState(const eState);
 		void setAverage(const size_t);
 		void reset();
-		void uninit();
 };
 
 #endif

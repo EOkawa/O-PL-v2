@@ -73,7 +73,7 @@ std::chrono::duration<double> loopTime;		// checks the loop time of the callback
 double FPS;
 /*******************************************************************************************/
 // Classes
-static NITDevice* dev;
-Acquisition acq;
+NITDevice* dev;
+Acquisition* acq = new Acquisition();       // Create acq class in heap
 /*******************************************************************************************/
 #endif // DLLMAIN_H_INCLUDED

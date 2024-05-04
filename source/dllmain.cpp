@@ -9,7 +9,7 @@
 class ImgAcquired : public NITObserver
 {
     void onNewFrame(const NITFrame& frame) {  //Called for each new frame
-        acq.save(frame.data());
+        acq->save(frame.data());
     }
 public:
     ~ImgAcquired()
@@ -28,6 +28,7 @@ extern "C" DllExport int __cdecl Init(uint8_t logEnabled)
         systemLog::get().write("Initialising acquisition...");
 
         dev = CreateDevice();           //Open a connection to the camera and create a NITDevice instance
+        
         if (dev == NULL) 
         {
             systemLog::get().write("Unable to connect to the camera. MCheck USB connection");
@@ -49,7 +50,6 @@ extern "C" DllExport int __cdecl Init(uint8_t logEnabled)
                 return -3;
         }
 
-        acq.init();                     //Initialise the acquisition class
         systemLog::get().write("Camera Initialised");
         return 1;
     }
@@ -87,19 +87,19 @@ extern "C" DllExport int __cdecl Run()
 extern "C" DllExport uint8_t __cdecl getState()
 {
     uint8_t state;
-    state = (uint8_t)(acq.getState());
+    state = (uint8_t)(acq->getState());
     return state;
 }
 
 extern "C" DllExport int64_t __cdecl getReadHead() {
-    return acq.getReadHead();
+    return acq->getReadHead();
 }
 
 extern "C" DllExport int32_t __cdecl setState(uint8_t newState)
 {
     eState state = static_cast<eState>(newState);
 
-    acq.setState(eState::none);
+    acq->setState(eState::none);
     Sleep(250);
 
     switch (state)
@@ -108,53 +108,53 @@ extern "C" DllExport int32_t __cdecl setState(uint8_t newState)
             setCamFPS(10); // There is no need for fast acquisition because it is for display only
             setCamTrigger(0); // Set trigger off
             Sleep(250);
-            acq.setState(eState::IR);
+            acq->setState(eState::IR);
             systemLog::get().write("New state: IR");
             break;
         case eState::LivePL:
             setCamFPS(10); // There is no need for fast acquisition because it is for display only
             setCamTrigger(1); // Set trigger on
             Sleep(250);
-            acq.setState(eState::LivePL);
+            acq->setState(eState::LivePL);
             systemLog::get().write("New state: LivePL");
             break;
         case eState::PL:
-            acq.reset();
+            acq->reset();
             setCamFPS(FPS); // Back to set acquisition speed
             setCamTrigger(1); // Set trigger on
             Sleep(250);
-            acq.setState(eState::PL);
+            acq->setState(eState::PL);
             systemLog::get().write("New state: PL");
             break;
         default:
-            acq.setState(eState::none);
+            acq->setState(eState::none);
     }
     return 1;
 }
 
 extern "C" DllExport void __cdecl getImage(uint16_t * array, int32_t array_length_row, int32_t array_length_col) {
-    acq.getImage(array);
+    acq->getImage(array);
 }
 
 extern "C" DllExport int32_t __cdecl getPLReady() 
 {
-    if (acq.getPLready()) return 1;
+    if (acq->getPLready()) return 1;
     else  return 0;
 }
 extern "C" DllExport void __cdecl getPL(size_t bufferNumber, uint16_t * array, int32_t array_length_row, int32_t array_length_col) {
-    acq.getPL(bufferNumber, array);
+    acq->getPL(bufferNumber, array);
 }
 
 extern "C" DllExport void __cdecl getBright(size_t bufferNumber, uint16_t * array, int32_t array_length_row, int32_t array_length_col) {
-    acq.getBright(bufferNumber, array);
+    acq->getBright(bufferNumber, array);
 }
 
 extern "C" DllExport void __cdecl getDark(size_t bufferNumber, uint16_t * array, int32_t array_length_row, int32_t array_length_col) {
-    acq.getDark(bufferNumber, array);
+    acq->getDark(bufferNumber, array);
 }
 
 extern "C" DllExport void __cdecl getAveragePL(uint16_t * array, int32_t array_length_row, int32_t array_length_col) {
-    acq.getAveragePL(array);
+    acq->getAveragePL(array);
 }
 
 extern "C" DllExport double __cdecl getFPS() {
@@ -163,7 +163,7 @@ extern "C" DllExport double __cdecl getFPS() {
 
 extern "C" DllExport int32_t __cdecl setPLAverages(size_t newAverages)
 {
-    acq.setAverage(newAverages);
+    acq->setAverage(newAverages);
     return 1;
 }
 
@@ -187,7 +187,7 @@ extern "C" DllExport int32_t __cdecl setCamGain(size_t newGain)
 
 extern "C" DllExport int32_t __cdecl setCamFPS(double newFPS)
 {
-    static eState state = (acq.getState());
+    static eState state = (acq->getState());
     static double readValue;
 
     double min_fps = dev->minFps();
@@ -292,7 +292,7 @@ extern "C" DllExport int32_t __cdecl setCamTrigger(uint8_t enable)
 extern "C" DllExport void __cdecl Stop()
 {
     systemLog::get().write("Stopping acquisition...");
-    acq.setState(eState::none);
+    acq->setState(eState::none);
     ::Sleep(200);
     dev->stop();                                //Stop the capture
     ::Sleep(200);
@@ -302,10 +302,10 @@ extern "C" DllExport void __cdecl Stop()
 
 extern "C" DllExport void __cdecl Uninit()
 {
-    setCamTrigger(0); // Set trigger off
+    setCamTrigger(0);                           // Set trigger off
     systemLog::get().write("Uninitialising...");
     ::Sleep(1000);
-    acq.uninit();   // Stop acq
+    delete acq;                                 // delete acq class from heap
     systemLog::get().write("Program terminated");
     systemLog::get().write("#############################################");
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
