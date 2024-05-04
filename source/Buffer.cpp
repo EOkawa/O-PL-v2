@@ -8,7 +8,7 @@ void ringBuffer::create() {
     this->Image.resize(STREAMBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
 }
 
-void ringBuffer::saveImage(float* data, size_t buffer, vector<float>& FF)
+void ringBuffer::saveImage(float* data, const size_t buffer, vector<float>& FF)
 {
     size_t writeHead = (buffer - 1) % STREAMBUFFERSIZE;
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
@@ -52,7 +52,7 @@ void livePLBuffer::create()
     this->tempImage.resize(ROWSIZE * COLUMNSIZE);
 }
 
-void livePLBuffer::savePL(float* data, size_t buffer)
+void livePLBuffer::savePL(float* data, const size_t buffer)
 {
     size_t writeHead = (buffer - 1) % STREAMBUFFERSIZE; // Increment writeHead;
 
@@ -119,7 +119,7 @@ void PLBuffer::create()
     this->image2.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
 }
 
-void PLBuffer::savePL(float* data, size_t buffer)
+void PLBuffer::savePL(float* data, const size_t buffer)
 {
     vector<uint16_t>* ptr;
 
@@ -138,7 +138,8 @@ void PLBuffer::savePL(float* data, size_t buffer)
     }
 }
 
-void PLBuffer::readPL(size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
+
+void PLBuffer::readPL(const size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
 {
     bool brightFirst = (calcBrightness(this->image1[0], 250) > calcBrightness(this->image2[0], 250));
 
@@ -158,7 +159,7 @@ void PLBuffer::readPL(size_t bufferNumber, uint16_t* destination, vector<float>&
         destination[i] = (uint16_t)(((float)ptrBright->at(i) - (float)ptrDark->at(i)) / FF.at(i));
 }
 
-void PLBuffer::readBright(size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
+void PLBuffer::readBright(const size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
 {
     vector<uint16_t>* ptr;
 
@@ -171,7 +172,7 @@ void PLBuffer::readBright(size_t bufferNumber, uint16_t* destination, vector<flo
             destination[i] = ptr->at(i) / FF.at(i);
 }
 
-void PLBuffer::readDark(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
+void PLBuffer::readDark(const size_t bufferNumber, uint16_t* destination, vector<float>& FF)
 {
     vector<uint16_t>* ptr;
 
@@ -184,7 +185,7 @@ void PLBuffer::readDark(size_t bufferNumber, uint16_t* destination, vector<float
         destination[i] = ptr->at(i) / FF.at(i);
 }
 
-void PLBuffer::readAveragePL(uint16_t* destination, vector<float>& FF, size_t average)
+void PLBuffer::readAveragePL(uint16_t* destination, vector<float>& FF, const size_t average)
 {
     bool brightFirst = (calcBrightness(this->image1[0], 250) > calcBrightness(this->image2[0], 250));
     

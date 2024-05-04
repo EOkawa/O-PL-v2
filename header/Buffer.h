@@ -34,7 +34,7 @@ class ringBuffer
 
         // Method declarations
         void create();
-        void saveImage(float*, size_t, vector<float>&);
+        void saveImage(float*, const size_t, vector<float>&);
         void readImage(uint16_t*) const;
         void reset();
         int64_t getReadHead();
@@ -56,11 +56,11 @@ class livePLBuffer : public ringBuffer
             copying(false)
         {}
 
-        ~livePLBuffer() {
-        }
+        ~livePLBuffer() 
+        {}
 
         void create();
-        void savePL(float*, size_t);
+        void savePL(float*, const size_t);
         void readPL(uint16_t*) const;
         void destroy();
 };
@@ -81,11 +81,11 @@ class PLBuffer : public ringBuffer
         }
 
         void create();
-        void savePL(float*, size_t);
-        void readPL(size_t, uint16_t*, vector<float>&);
-        void readBright(size_t, uint16_t*, vector<float>&);
-        void readDark(size_t, uint16_t*, vector<float>&);
-        void readAveragePL(uint16_t*, vector<float>&, size_t);
+        void savePL(float*, const size_t);
+        void readPL(const size_t, uint16_t*, vector<float>&);
+        void readBright(const size_t, uint16_t*, vector<float>&);
+        void readDark(const size_t, uint16_t*, vector<float>&);
+        void readAveragePL(uint16_t*, vector<float>&, const size_t);
         void destroy();
 };
 

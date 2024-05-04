@@ -3,20 +3,6 @@
 MLTiffW tiffWrite;						// handles tiff writes
 MLTiffR tiffRead;                       // handles tiff reads
 
-
-
-Acquisition::Acquisition() 
-{
-    this->state = eState::none;
-    this->average = 5;
-    this->BufferNumber = 0;
-    this->FF_valid = false;
-    this->completed = false;
-}
-
-Acquisition::~Acquisition() 
-{}
-
 void Acquisition::init()
 {
     this->FF.resize((ROWSIZE * COLUMNSIZE), 0);
@@ -68,7 +54,7 @@ int Acquisition::loadFF()
     return e;
 }
 
-void Acquisition::setState(eState newState) {
+void Acquisition::setState(const eState newState) {
     this->BufferNumber = 0;
     this->completed = false;
     PL_Buffer.reset();
@@ -124,7 +110,7 @@ void Acquisition::getImage(uint16_t* array)
     }
 }
 
-int32_t Acquisition::getPL(size_t bufferNumber, uint16_t* array)
+int32_t Acquisition::getPL(const size_t bufferNumber, uint16_t* array)
 {
     if ((this->state == eState::none) && (this->completed)) {
         PL_Buffer.readPL(bufferNumber, array, this->FF);
@@ -133,7 +119,7 @@ int32_t Acquisition::getPL(size_t bufferNumber, uint16_t* array)
     else return -1;
 }
 
-int32_t Acquisition::getBright(size_t bufferNumber, uint16_t* array)
+int32_t Acquisition::getBright(const size_t bufferNumber, uint16_t* array)
 {
     if ((this->state == eState::none) && (this->completed)) {
         PL_Buffer.readBright(bufferNumber, array, this->FF);
@@ -142,7 +128,7 @@ int32_t Acquisition::getBright(size_t bufferNumber, uint16_t* array)
     else return -1;
 }
 
-int32_t Acquisition::getDark(size_t bufferNumber, uint16_t* array)
+int32_t Acquisition::getDark(const size_t bufferNumber, uint16_t* array)
 {
     if ((this->state == eState::none) && (this->completed)) {
         PL_Buffer.readDark(bufferNumber, array, this->FF);
@@ -160,7 +146,7 @@ int32_t Acquisition::getAveragePL(uint16_t* array)
     else return -1;
 }
 
-void Acquisition::setAverage(size_t newAverage) {
+void Acquisition::setAverage(const size_t newAverage) {
     this->average = newAverage;
 }
 
