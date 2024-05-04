@@ -75,7 +75,7 @@ void Acquisition::setState(eState newState) {
     this->state = newState;
 }
 
-eState Acquisition::getState() {
+eState Acquisition::getState() const {
     return this->state;
 }
 
@@ -164,7 +164,7 @@ void Acquisition::setAverage(size_t newAverage) {
     this->average = newAverage;
 }
 
-bool Acquisition::getPLready() {
+bool Acquisition::getPLready() const {
     return this->completed;
 }
 

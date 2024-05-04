@@ -43,25 +43,27 @@ class Acquisition
 		size_t BufferNumber;			// keeps track of the incoming images
 		bool FF_valid;					// boolean indicating if FF is valid
 		bool completed;
-	
+
+		// Method declatations
+		int loadFF();
+
 	public:
 		Acquisition();					// Constructor
 		~Acquisition();					// Destructor
 
 		// Method declarations
 		void init();
-		int loadFF();
-		void setState(eState);
-		eState getState();
+		eState getState() const;
 		int64_t getReadHead();
-		void save(float*);
 		void getImage(uint16_t*);
 		int32_t getPL(size_t, uint16_t*);
 		int32_t getBright(size_t, uint16_t*);
 		int32_t getDark(size_t, uint16_t*);
 		int32_t getAveragePL(uint16_t*);
+		bool getPLready() const;
+		void save(float*);
+		void setState(eState);
 		void setAverage(size_t);
-		bool getPLready();
 		void reset();
 		void uninit();
 };

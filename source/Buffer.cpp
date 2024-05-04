@@ -19,7 +19,7 @@ void ringBuffer::saveImage(float* data, size_t buffer, vector<float>& FF)
     systemLog::get().write("writeHead " + to_string(writeHead));
 }
 
-void ringBuffer::readImage(uint16_t* destination)
+void ringBuffer::readImage(uint16_t* destination) const
 {
     if (this->readHead >= 0)
     {
@@ -89,7 +89,7 @@ void livePLBuffer::savePL(float* data, size_t buffer)
     }
 }
 
-void livePLBuffer::readPL(uint16_t* destination) 
+void livePLBuffer::readPL(uint16_t* destination) const
 {
     if (this->readHead >= 0)
     {
@@ -138,7 +138,7 @@ void PLBuffer::savePL(float* data, size_t buffer)
     }
 }
 
-void PLBuffer::readPL(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
+void PLBuffer::readPL(size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
 {
     bool brightFirst = (calcBrightness(this->image1[0], 250) > calcBrightness(this->image2[0], 250));
 
@@ -158,7 +158,7 @@ void PLBuffer::readPL(size_t bufferNumber, uint16_t* destination, vector<float>&
         destination[i] = (uint16_t)(((float)ptrBright->at(i) - (float)ptrDark->at(i)) / FF.at(i));
 }
 
-void PLBuffer::readBright(size_t bufferNumber, uint16_t* destination, vector<float>& FF)
+void PLBuffer::readBright(size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
 {
     vector<uint16_t>* ptr;
 

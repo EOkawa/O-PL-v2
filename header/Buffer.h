@@ -35,7 +35,7 @@ class ringBuffer
         // Method declarations
         void create();
         void saveImage(float*, size_t, vector<float>&);
-        void readImage(uint16_t*);
+        void readImage(uint16_t*) const;
         void reset();
         int64_t getReadHead();
         void destroy();
@@ -61,7 +61,7 @@ class livePLBuffer : public ringBuffer
 
         void create();
         void savePL(float*, size_t);
-        void readPL(uint16_t*);
+        void readPL(uint16_t*) const;
         void destroy();
 };
 
