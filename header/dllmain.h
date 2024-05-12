@@ -70,14 +70,14 @@ DllExport int32_t __cdecl setCamTrigger(uint8_t);
 /*******************************************************************************************/
 // Global Variables
 std::chrono::duration<double> loopTime;		// checks the loop time of the callback function
-bool finished = false;
-double FPS;
+static bool finished = false;
+static double FPS;
 /*******************************************************************************************/
 // Functions
 void Run();
 /*******************************************************************************************/
 // Classes
-NITDevice* dev;
-Acquisition* acq = new Acquisition();       // Create acq class in heap
+static NITDevice* dev;
+static Acquisition* acq = new Acquisition();       // Create acq class in heap
 /*******************************************************************************************/
 #endif // DLLMAIN_H_INCLUDED
