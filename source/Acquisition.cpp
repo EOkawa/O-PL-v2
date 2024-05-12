@@ -34,7 +34,7 @@ int Acquisition::loadFF()
     // Open file
     int e = tiffRead.open("FF.tif");
     if (e != 1) {
-        systemLog::get().write("Unable to open Flatfield file.Unity Flatfield will be used");
+        LOG("Unable to open Flatfield file.Unity Flatfield will be used");
         tiffRead.close();
         return e;
     }
@@ -46,15 +46,15 @@ int Acquisition::loadFF()
 
     if ((e == 1) || (temp_flatfield != NULL))
     {
-        systemLog::get().write("Flatfield file FF.tif opened successfully");
+        LOG("Flatfield file FF.tif opened successfully");
         this->FF_valid = true;
         uint16_t max_value = *max_element(temp_flatfield, temp_flatfield + (1080 * 1024));
-        systemLog::get().write("Flatfield file max value: " + to_string(max_value) + ". Flatfield will be normalised");
+        LOG("Flatfield file max value: " + to_string(max_value) + ". Flatfield will be normalised");
 
         for (int i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
         {
             if (temp_flatfield[i] == 0) {
-                systemLog::get().write("Invalid FF");
+                LOG("Invalid FF");
                 this->FF_valid = false; // If there is at least one bad number, set FF to 1
                 return -1;
             }
@@ -100,7 +100,7 @@ void Acquisition::save(float* data)
             else { 
                 this->state = eState::none; 
                 this->completed = true;
-                systemLog::get().write("PL acquisition complete!");
+                LOG("PL acquisition complete!");
             }
             break;
         case eState::none:

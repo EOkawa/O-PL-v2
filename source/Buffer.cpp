@@ -16,7 +16,7 @@ void ringBuffer::saveImage(float* data, const size_t buffer, vector<float>& FF)
     
     this->readHead = writeHead;
 
-    systemLog::get().write("writeHead " + to_string(writeHead));
+    LOG("writeHead " + to_string(writeHead));
 }
 
 void ringBuffer::readImage(uint16_t* destination) const
@@ -26,7 +26,7 @@ void ringBuffer::readImage(uint16_t* destination) const
         for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
             destination[i] = this->Image[this->readHead].at(i);
 
-        systemLog::get().write("readHead " + to_string(this->readHead));
+        LOG("readHead " + to_string(this->readHead));
     }
 }
 
@@ -85,7 +85,7 @@ void livePLBuffer::savePL(float* data, const size_t buffer)
         this->copying = false;
         this->readHead = writeHead; // Increment readHead 
         
-        systemLog::get().write("writeHead " + to_string(writeHead));
+        LOG("writeHead " + to_string(writeHead));
     }
 }
 
@@ -98,7 +98,7 @@ void livePLBuffer::readPL(uint16_t* destination) const
         for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
             destination[i] = this->Image[this->readHead].at(i);
 
-        systemLog::get().write("readHead " + to_string(this->readHead));
+        LOG("readHead " + to_string(this->readHead));
     }
 }
 
@@ -128,13 +128,13 @@ void PLBuffer::savePL(float* data, const size_t buffer)
     if (buffer % 2 == 1) ptr = &this->image1[writeHead];
     else ptr = &this->image2[writeHead];
 
-    systemLog::get().write("Writing to image1 " + to_string(writeHead));
+    LOG("Writing to image1 " + to_string(writeHead));
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
         ptr->at(i) = (uint16_t)(data[i] * BITDEPTH);
 
     if (buffer % 2 == 0) {
         this->readHead = writeHead; // Increment readHead 
-        systemLog::get().write("readHead: " + to_string(this->readHead));
+        LOG("readHead: " + to_string(this->readHead));
     }
 }
 

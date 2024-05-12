@@ -12,6 +12,8 @@
 
 #include "fileapi.h"
 
+#define LOG systemLog::get().write // Shorten the logging call
+
 using namespace std;
 
 class systemLog {
