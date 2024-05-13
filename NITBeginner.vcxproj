@@ -42,7 +42,7 @@
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
@@ -72,6 +72,10 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>O-PL</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>O-PL</TargetName>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -113,6 +117,18 @@
       <AdditionalLibraryDirectories>$(PROJECTDIR)..\lib\$(PLATFORMTARGET);$(PROJECTDIR)..\lib\tiff\lib\tiffxx.lib;$(PROJECTDIR)..\lib\tiff\lib\tiff.lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);NITLibrary_$(PLATFORMTARGET)-3.1.0.lib;"C:\Program Files\National Instruments\LabVIEW 2020\cintools\labview.lib";"$(PROJECTDIR)..\lib\tiff\lib\tiff.lib";"$(PROJECTDIR)..\lib\tiff\lib\tiffxx.lib"</AdditionalDependencies>
     </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <AdditionalLibraryDirectories>$(PROJECTDIR)..\lib\$(PLATFORMTARGET);$(PROJECTDIR)..\lib\tiff\lib\tiffxx.lib;$(PROJECTDIR)..\lib\tiff\lib\tiff.lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);NITLibrary_$(PLATFORMTARGET)-3.1.0.lib;"C:\Program Files\National Instruments\LabVIEW 2020\cintools\labview.lib";"$(PROJECTDIR)..\lib\tiff\lib\tiff.lib";"$(PROJECTDIR)..\lib\tiff\lib\tiffxx.lib"</AdditionalDependencies>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(PROJECTDIR)..\inc;$(PROJECTDIR)..;$(PROJECTDIR)Common;$(PROJECTDIR)header;$(PROJECTDIR)..\lib\tiff\include;C:\Program Files\National Instruments\LabVIEW 2020\cintools</AdditionalIncludeDirectories>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <SupportJustMyCode>false</SupportJustMyCode>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\Acquisition.cpp" />
