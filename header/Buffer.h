@@ -8,8 +8,6 @@
 #include <algorithm>
 #include "Common.h"
 
-using namespace std;
-
 /*******************************************************************************************/
 // Buffer classes. ringBuffer parent class has the basic memory buffer and the children
 // classes are more specialised (LivePL and PL). They retain the images acquired by the
@@ -19,9 +17,9 @@ using namespace std;
 class ringBuffer
 {
     protected:
-        vector<vector<uint16_t>> Image;
+        std::vector<std::vector<uint16_t>> Image;
         int64_t readHead;
-        mutex mtx;
+        std::mutex mtx;
 
     public:
         ringBuffer() :
@@ -34,7 +32,7 @@ class ringBuffer
 
         // Method declarations
         void create();
-        void saveImage(float*, const size_t, vector<float>&);
+        void saveImage(float*, const size_t, std::vector<float>&);
         void readImage(uint16_t*) const;
         void reset();
         int64_t getReadHead();
@@ -44,7 +42,7 @@ class ringBuffer
 class livePLBuffer : public ringBuffer
 {
     private:
-        vector<float> tempImage;
+        std::vector<float> tempImage;
         uint16_t tempBrightness;
         bool writing;
         bool copying;
@@ -68,9 +66,9 @@ class livePLBuffer : public ringBuffer
 class PLBuffer : public ringBuffer
 {
     private:
-        vector<float> tempImage;
-        vector<vector<uint16_t>> image1; // Odd images
-        vector<vector<uint16_t>> image2; // Even images
+        std::vector<float> tempImage;
+        std::vector<std::vector<uint16_t>> image1; // Odd images
+        std::vector<std::vector<uint16_t>> image2; // Even images
         float tempBrightness;
     public:
         PLBuffer() :
@@ -82,10 +80,10 @@ class PLBuffer : public ringBuffer
 
         void create();
         void savePL(float*, const size_t);
-        void readPL(const size_t, uint16_t*, vector<float>&);
-        void readBright(const size_t, uint16_t*, vector<float>&);
-        void readDark(const size_t, uint16_t*, vector<float>&);
-        void readAveragePL(uint16_t*, vector<float>&, const size_t);
+        void readPL(const size_t, uint16_t*, std::vector<float>&);
+        void readBright(const size_t, uint16_t*, std::vector<float>&);
+        void readDark(const size_t, uint16_t*, std::vector<float>&);
+        void readAveragePL(uint16_t*, std::vector<float>&, const size_t);
         void destroy();
 };
 

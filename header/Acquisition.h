@@ -38,7 +38,7 @@ class Acquisition
 		ringBuffer IR_Buffer;			// IR image ringbuffer
 		livePLBuffer livePL_Buffer;		// livePL image ringbuffer
 		PLBuffer PL_Buffer;				// PL image ringbuffer
-		vector<float> FF;				// vector that stores the FF
+		std::vector<float> FF;			// vector that stores the FF
 		size_t average;					// number of PL images to average
 		size_t BufferNumber;			// keeps track of the incoming images
 		bool FF_valid;					// boolean indicating if FF is valid

@@ -5,10 +5,10 @@
 // *****************************************************************************
 
 void ringBuffer::create() {
-    this->Image.resize(STREAMBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
+    this->Image.resize(STREAMBUFFERSIZE, std::vector<uint16_t>(ROWSIZE * COLUMNSIZE));
 }
 
-void ringBuffer::saveImage(float* data, const size_t buffer, vector<float>& FF)
+void ringBuffer::saveImage(float* data, const size_t buffer, std::vector<float>& FF)
 {
     size_t writeHead = (buffer - 1) % STREAMBUFFERSIZE;
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
@@ -16,7 +16,7 @@ void ringBuffer::saveImage(float* data, const size_t buffer, vector<float>& FF)
     
     this->readHead = writeHead;
 
-    LOG("writeHead " + to_string(writeHead));
+    LOG("writeHead " + std::to_string(writeHead));
 }
 
 void ringBuffer::readImage(uint16_t* destination) const
@@ -26,7 +26,7 @@ void ringBuffer::readImage(uint16_t* destination) const
         for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
             destination[i] = this->Image[this->readHead].at(i);
 
-        LOG("readHead " + to_string(this->readHead));
+        LOG("readHead " + std::to_string(this->readHead));
     }
 }
 
@@ -85,7 +85,7 @@ void livePLBuffer::savePL(float* data, const size_t buffer)
         this->copying = false;
         this->readHead = writeHead; // Increment readHead 
         
-        LOG("writeHead " + to_string(writeHead));
+        LOG("writeHead " + std::to_string(writeHead));
     }
 }
 
@@ -98,7 +98,7 @@ void livePLBuffer::readPL(uint16_t* destination) const
         for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
             destination[i] = this->Image[this->readHead].at(i);
 
-        LOG("readHead " + to_string(this->readHead));
+        LOG("readHead " + std::to_string(this->readHead));
     }
 }
 
@@ -115,36 +115,36 @@ void livePLBuffer::destroy()
 void PLBuffer::create()
 {
     this->tempImage.resize(ROWSIZE * COLUMNSIZE);
-    this->image1.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
-    this->image2.resize(PLBUFFERSIZE, vector<uint16_t>(ROWSIZE * COLUMNSIZE));
+    this->image1.resize(PLBUFFERSIZE, std::vector<uint16_t>(ROWSIZE * COLUMNSIZE));
+    this->image2.resize(PLBUFFERSIZE, std::vector<uint16_t>(ROWSIZE * COLUMNSIZE));
 }
 
 void PLBuffer::savePL(float* data, const size_t buffer)
 {
-    vector<uint16_t>* ptr;
+    std::vector<uint16_t>* ptr;
 
     size_t writeHead = (buffer - 1) / 2;
 
     if (buffer % 2 == 1) ptr = &this->image1[writeHead];
     else ptr = &this->image2[writeHead];
 
-    LOG("Writing to image1 " + to_string(writeHead));
+    LOG("Writing to image1 " + std::to_string(writeHead));
     for (size_t i = 0; i < ROWSIZE * COLUMNSIZE; i++)
         ptr->at(i) = (uint16_t)(data[i] * BITDEPTH);
 
     if (buffer % 2 == 0) {
         this->readHead = writeHead; // Increment readHead 
-        LOG("readHead: " + to_string(this->readHead));
+        LOG("readHead: " + std::to_string(this->readHead));
     }
 }
 
 
-void PLBuffer::readPL(const size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
+void PLBuffer::readPL(const size_t bufferNumber, uint16_t* destination, std::vector<float>& FF) 
 {
     bool brightFirst = (calcBrightness(this->image1[0], 250) > calcBrightness(this->image2[0], 250));
 
-    vector<uint16_t>* ptrBright;
-    vector<uint16_t>* ptrDark;
+    std::vector<uint16_t>* ptrBright;
+    std::vector<uint16_t>* ptrDark;
 
     if (brightFirst) {
         ptrBright = &this->image1[bufferNumber];
@@ -159,9 +159,9 @@ void PLBuffer::readPL(const size_t bufferNumber, uint16_t* destination, vector<f
         destination[i] = (uint16_t)(((float)ptrBright->at(i) - (float)ptrDark->at(i)) / FF.at(i));
 }
 
-void PLBuffer::readBright(const size_t bufferNumber, uint16_t* destination, vector<float>& FF) 
+void PLBuffer::readBright(const size_t bufferNumber, uint16_t* destination, std::vector<float>& FF) 
 {
-    vector<uint16_t>* ptr;
+    std::vector<uint16_t>* ptr;
 
     if (calcBrightness(this->image1[bufferNumber], 250) > calcBrightness(this->image2[bufferNumber], 250)) 
         ptr = &this->image1[bufferNumber];
@@ -172,9 +172,9 @@ void PLBuffer::readBright(const size_t bufferNumber, uint16_t* destination, vect
             destination[i] = ptr->at(i) / FF.at(i);
 }
 
-void PLBuffer::readDark(const size_t bufferNumber, uint16_t* destination, vector<float>& FF)
+void PLBuffer::readDark(const size_t bufferNumber, uint16_t* destination, std::vector<float>& FF)
 {
-    vector<uint16_t>* ptr;
+    std::vector<uint16_t>* ptr;
 
     if (calcBrightness(this->image1[bufferNumber], 250) < calcBrightness(this->image2[bufferNumber], 250))
         ptr = &this->image1[bufferNumber];
@@ -185,12 +185,12 @@ void PLBuffer::readDark(const size_t bufferNumber, uint16_t* destination, vector
         destination[i] = ptr->at(i) / FF.at(i);
 }
 
-void PLBuffer::readAveragePL(uint16_t* destination, vector<float>& FF, const size_t average)
+void PLBuffer::readAveragePL(uint16_t* destination, std::vector<float>& FF, const size_t average)
 {
     bool brightFirst = (calcBrightness(this->image1[0], 250) > calcBrightness(this->image2[0], 250));
     
-    vector<uint16_t>* ptrBright;
-    vector<uint16_t>* ptrDark;
+    std::vector<uint16_t>* ptrBright;
+    std::vector<uint16_t>* ptrDark;
     
     if (brightFirst) {
         ptrBright = &this->image1[0];

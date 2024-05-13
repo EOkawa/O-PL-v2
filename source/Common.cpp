@@ -14,7 +14,7 @@ float calcBrightness(float* data, int kernel)
     return brightness;
 }
 
-float calcBrightness(vector<uint16_t>& data, int kernel)
+float calcBrightness(std::vector<uint16_t>& data, int kernel)
 {
     float brightness = 0;  // Reset the brightness sum
 

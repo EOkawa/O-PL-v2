@@ -93,11 +93,7 @@ DllExport int __cdecl Start()
         */
         LOG("Initialising acquisition...");
 
-        thread{Run}.detach();
-//        thread test(bla);
-//        ::Sleep(10000);
-//        test.join();
-
+        std::thread{Run}.detach();
     }
     catch (NITException& exc) {
         finished = true;
@@ -202,7 +198,7 @@ DllExport int32_t __cdecl setCamGain(size_t newGain)
     }
     catch (NITException& exc)
     {
-        string err = exc.what();
+        std::string err = exc.what();
         LOG("NITException" + err);
         return -1;
     }
@@ -219,7 +215,7 @@ DllExport int32_t __cdecl setCamFPS(double newFPS)
     if ((newFPS > max_fps) || (newFPS < min_fps))
     {   
         readValue = dev->fps();
-        LOG("Unable to set FPS. Current FPS: " + to_string(readValue) + ". min: " + to_string(min_fps) + ", max: " + to_string(max_fps));
+        LOG("Unable to set FPS. Current FPS: " + std::to_string(readValue) + ". min: " + std::to_string(min_fps) + ", max: " + std::to_string(max_fps));
 
         return -2;
     }
@@ -227,7 +223,7 @@ DllExport int32_t __cdecl setCamFPS(double newFPS)
     dev->updateConfig();
 
     readValue = dev->fps();
-    LOG("FPS: " + to_string(readValue));
+    LOG("FPS: " + std::to_string(readValue));
 
     if (readValue == newFPS) return 1;
     else return -1;
@@ -235,7 +231,7 @@ DllExport int32_t __cdecl setCamFPS(double newFPS)
 
 DllExport int32_t __cdecl writeCamFPS(double newFPS)
 {
-    LOG("Saving FPS Value: " + to_string(newFPS));
+    LOG("Saving FPS Value: " + std::to_string(newFPS));
     FPS = newFPS; // Just store value
     return 1;
 }
@@ -253,7 +249,7 @@ DllExport int32_t __cdecl getCamExposure(double& Exposure)
     try
     {
         Exposure = dev->paramValueOf("ExposureTime");
-        LOG("Exposure Time Read: " + to_string(Exposure));
+        LOG("Exposure Time Read: " + std::to_string(Exposure));
         return 1;
     }
     catch (NITException& exc)
@@ -273,7 +269,7 @@ DllExport int32_t __cdecl setCamExposure(double newExposure)
         dev->updateConfig();                                    //Data is sent to camera
 
         readExposure = dev->paramValueOf("ExposureTime");
-        LOG("Exposure Time Set: " + to_string(readExposure));
+        LOG("Exposure Time Set: " + std::to_string(readExposure));
 
         if (readExposure == newExposure) return 1;
         else return -1;
@@ -289,8 +285,8 @@ DllExport int32_t __cdecl setCamTrigger(uint8_t enable)
 {
     try
     {
-        string writeValue;
-        string readValue;
+        std::string writeValue;
+        std::string readValue;
 
         if (enable) writeValue = "Output";
         else writeValue = "Disabled";

@@ -16,7 +16,6 @@
 #include "extcode.h"
 #include "buffer.h"
 #include "pch.h"
-//#include "StdAfx.h"
 
 #define DllImport extern "C" __declspec( dllimport )
 #define DllExport extern "C" __declspec( dllexport )

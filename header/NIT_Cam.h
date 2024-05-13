@@ -19,7 +19,6 @@
 #error you must define CAMERA_MODEL in CameraSelector.h.
 #endif // CAMERA_MODEL
 
-using namespace std;
 using namespace NITLibrary;
 using namespace NITLibrary::NITToolBox;  //For the filters and observer
 

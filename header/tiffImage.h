@@ -7,8 +7,6 @@ namespace tifio {
 	#include "tiffio.h"
 }
 
-using namespace std;
-
 struct DirInfo {
 	std::string name;
 	uint32_t width;

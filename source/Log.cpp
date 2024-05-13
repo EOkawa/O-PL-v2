@@ -21,7 +21,7 @@ int systemLog::init(bool enable)
 }
 
 void systemLog::write(std::string message) {
-    if (this->enabled) cout << getCurrentDateTime() << "\t" << message << "\n";
+    if (this->enabled) std::cout << getCurrentDateTime() << "\t" << message << "\n";
 }
 
 std::string systemLog::getCurrentDateTime()

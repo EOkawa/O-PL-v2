@@ -13,10 +13,8 @@
 #include <vector>
 #include "Log.h"
 
-using namespace std;
-
 // Functions
 float calcBrightness(float*, int);
-float calcBrightness(vector<uint16_t>&, int);
+float calcBrightness(std::vector<uint16_t>&, int);
 
 #endif

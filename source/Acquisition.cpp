@@ -48,8 +48,8 @@ int Acquisition::loadFF()
     {
         LOG("Flatfield file FF.tif opened successfully");
         this->FF_valid = true;
-        uint16_t max_value = *max_element(temp_flatfield, temp_flatfield + (1080 * 1024));
-        LOG("Flatfield file max value: " + to_string(max_value) + ". Flatfield will be normalised");
+        uint16_t max_value = *std::max_element(temp_flatfield, temp_flatfield + (1080 * 1024));
+        LOG("Flatfield file max value: " + std::to_string(max_value) + ". Flatfield will be normalised");
 
         for (int i = 0; i < ROWSIZE * COLUMNSIZE; ++i)
         {
